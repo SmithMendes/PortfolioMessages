@@ -15,6 +15,11 @@ app.use(cors());
 app.use(express.json()); // To parse JSON bodies
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Explicitly serve dashboard on root
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
 // MongoDB Connection
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('MongoDB connected successfully'))
