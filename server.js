@@ -12,13 +12,8 @@ const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors());
-app.use(express.json()); // To parse JSON bodies
-
-
-// Explicitly serve dashboard on root
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
+app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
 
 // MongoDB Connection
 mongoose.connect(process.env.MONGO_URI)
@@ -35,25 +30,24 @@ const contactSchema = new mongoose.Schema({
 
 const Contact = mongoose.model('Contact', contactSchema);
 
-// API Endpoint to fetch all messages
+// GET all messages
 app.get('/api/messages', async (req, res) => {
   try {
     const messages = await Contact.find().sort({ createdAt: -1 });
     res.json({ success: true, count: messages.length, data: messages });
   } catch (error) {
     console.error('Error fetching messages:', error);
-    res.status(500).json({ success: false, message: 'Error loading dashboard' });
+    res.status(500).json({ success: false, message: 'Error loading messages.' });
   }
 });
 
-// API Endpoint to receive form submissions
+// POST a new contact message
 app.post('/api/contact', async (req, res) => {
   try {
     const { name, email, message } = req.body;
 
-    // Basic validation
     if (!name || !email || !message) {
-        return res.status(400).json({ success: false, message: 'All fields are required.' });
+      return res.status(400).json({ success: false, message: 'All fields are required.' });
     }
 
     const newContact = new Contact({ name, email, message });
@@ -66,9 +60,11 @@ app.post('/api/contact', async (req, res) => {
   }
 });
 
-if (process.env.NODE_ENV !== 'production') {
+// Local / Render: start the server
+// Vercel: skips this and uses the exported app
+if (!process.env.VERCEL) {
   app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
+    console.log(`Server running on port ${PORT}`);
   });
 }
 
